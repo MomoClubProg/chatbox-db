@@ -1,32 +1,41 @@
+const { existsSync, writeFileSync } = require('node:fs');
 const fs = require('node:fs');
+const { builtinModules } = require('node:module');
 
 
 // Definition de DB 
 class DB {
  
-  // ... Retourner tous les messages storees
+  
+  /**
+   * get all messages in DB
+   * @returns obj message list
+   */
   static getMessages() {
-    //  ... votre code ... 
+    if(fs.existsSync('./messages.json')){
+      let words = JSON.parse(fs.readFileSync('./messages.json','utf-8'));
+      return words;
+    }
+    else{
+      fs.writeFileSync('./messages.json','[]');
+      return [];
+    }
   }
 
-
-  // ... prend un objet `msg` et l'ajoute a `./messages.json`
+  /**
+   * add a message to DB
+   * @param {Message} msg - the message to add to the DB 
+   */
   static addMessage(msg) {
-    // ... votre code ... 
+
+    let msgs = DB.getMessages();
+    msgs.push(msg);
+    let str_msgs = JSON.stringify(msgs);
+    fs.writeFileSync('./messages.json',str_msgs);
   }
 
 }
 
-// Utilisation de DB
-
-// avoir une liste de tous les objets `msg`
-const allMessages = DB.getMessages();
-
-// Ajouter un message a notre base de donnees
-DB.addMessage({ 
-  user: 'myName',
-  msg: 'this is a sample message'
-});
-
+module.exports = DB;
 
 
