@@ -8,13 +8,18 @@ class DB {
    * get all messages in DB
    * @returns obj message list
    */
-  static getMessages() {
-    if(fs.existsSync('./messages.json')){
-      let words = JSON.parse(fs.readFileSync('./messages.json','utf-8'));
+  static getMessages(channel) {
+    if(!fs.existsSync('./data')){
+      fs.mkdirSync('./data');
+    }
+
+    if(fs.existsSync('./data/' + channel + '.json')){
+      let words = JSON.parse(fs.readFileSync('./data/' + channel + '.json','utf-8'));
       return words;
     }
     else{
-      fs.writeFileSync('./messages.json','[]');
+      
+      fs.writeFileSync('./data/' + channel + '.json','[]');
       return [];
     }
   }
@@ -23,12 +28,12 @@ class DB {
    * add a message to DB
    * @param {Message} msg - the message to add to the DB 
    */
-  static addMessage(msg) {
+  static addMessage(channel, msg) {
 
-    let msgs = DB.getMessages();
+    let msgs = DB.getMessages(channel);
     msgs.push(msg);
     let str_msgs = JSON.stringify(msgs);
-    fs.writeFileSync('./messages.json',str_msgs);
+    fs.writeFileSync('./data/' + channel + '.json',str_msgs);
   }
 
 }
