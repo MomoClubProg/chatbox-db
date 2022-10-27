@@ -30,6 +30,11 @@ class DB {
    */
   static addMessage(channel, msg) {
 
+    // Not existing directory guard
+    if (!fs.existsSync('./data'))
+     fs.mkdirSync('./data');
+   
+    // Add a message
     let msgs = DB.getMessages(channel);
     msgs.push(msg);
     let str_msgs = JSON.stringify(msgs);
