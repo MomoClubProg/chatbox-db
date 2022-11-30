@@ -30,7 +30,7 @@ class DB {
   }
 
 
-  static int32ToBuffer(messageBuf) {
+  static int32ToBuffer(buffer) {
 
       if (
         buffer instanceof Buffer ||
