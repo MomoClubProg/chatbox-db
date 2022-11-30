@@ -5,77 +5,73 @@ class DB {
   constructor() {
     this.messages = {};
   }
+
+  /**
+  * Default Channel Template
+  */ 
   static DEFAULT =(
     channel,
     time = new Date()
   ) => {
 
+    // Get time
     let time_of_day = time.toTimeString().split(' ')[0];
     let date = time.toDateString();
     return {
       messages:[{
         username:'Marvin',
-        message:`\x1b[90mThis chat room \x1b[32m${channel}\x1b[90m was created at ${time_of_day} on ${date}\x1b[0m`,
+        message:
+          `\x1b[90mThis chat room \x1b[32m${channel}\x1b[90m `+
+          `was created at ${time_of_day} on ${date}\x1b[0m`,
         userTag:'BOT'
       }]
     }
 
   }
+
+
   static int32ToBuffer(messageBuf) {
 
-      if (messageBuf instanceof Buffer || typeof messageBuf == "string") {
-        return messageBuf;
-      }
+      if (
+        buffer instanceof Buffer ||
+        typeof buffer == "string"
+      ) return buffer;
+      
 
-      let byte_size = messageBuf.data[messageBuf.data.length-1]
-      console.log('messageBuf', messageBuf)
-      let ans = new Uint8Array(byte_size * messageBuf.data.length + 1);
+      let byte_size = buffer[buffer.length-1]
+      let ans = new Uint8Array(byte_size * buffer.length + 1);
+
+      // Set the last byte as int byte size indicator
       ans[ans.length-1] = 0xff - byte_size;
   
-
-      for (let i = 0; i < messageBuf.data.length-1; i++) {
-        ans[i  ] = (messageBuf.data[i]&0xff000000)>> 24;
-        ans[i+1] = (messageBuf.data[i]&0x00ff0000)>>16;
-        ans[i+2] = (messageBuf.data[i]&0x0000ff00)>> 8;
-        ans[i+3] = (messageBuf.data[i]&0x000000ff)>> 0; 
+      // Set the Uint8Array buffer
+      for (let i = 0; i < buffer.length-1; i++) {
 
         for (let j = 0; j < byte_size; j++) {
+          // Calculate byte size shift
           let shift = -8 * j + ((byte_size - 1) * 8);
-          ans[i+j] = (messageBuf.data[i]&(0xff << shift) << shift);
+
+          // Mask only 1 byte N times, MSB first
+          // Set the value in buffer
+          ans[i+j] = (buffer[i]&(0xff << shift) << shift);
         }
       }
 
-      
-
       return Buffer.from(ans);
-  }
-
-  static toInt32Array(buffer) {
-    if (typeof buffer === 'string') {
-      return buffer;
-    };
-    
-    let data = [];
-    let byte_size = 0xff - buffer[buffer.length-1];
-
-    if (byte_size > 4) return;
-
-    for (let i = 0; i < buffer.length-1; i += byte_size) {
-      let val = 0x00000000;
-      for (let j = 0; j < byte_size; j++) {
-        val |= buffer[i+j] << (-(8) * j + ((byte_size-1) * 8));
-      }
-      data.push(val);
-    }
-    return {data, byte_size};
   }
 
   /**
   * Load the local server file if it exists
   */ 
   loadIfExists(channel) {
-    console.log(channel, this.messages);
+    // If channel's message history does exist in Heap,
+    // return it.
+    if (this.messages[channel] !== undefined) return {
+      messages: this.messages[channel]
+    };
 
+    // If no message history for a channel is found, 
+    // return a channel template.
     if (
       !fs.existsSync(`./data/${channel}.json`)
     ) {
@@ -83,19 +79,13 @@ class DB {
       return DB.DEFAULT(channel);
     }
 
-
-    if (this.messages[channel] !== undefined) return {
-      messages: this.messages[channel]
-    };
-
-
+    // Read from a channel file
     let data = JSON.parse(
       fs.readFileSync(`./data/${channel}.json`, 'utf-8')
     );
-    console.log(data)
 
+    // Convert to Uint8Arrays to buffers, ignore strings
     data.messages = data.messages.map(x => {
-      console.log(x);
       if (typeof x.message == 'string') return x;
       x.message = Buffer.from(x.message.data);
       return x;
@@ -116,7 +106,6 @@ class DB {
     })
     
     this.messages[channel] = data;
-    console.log('DB DATA', data)
   } 
   
   /**
@@ -145,7 +134,7 @@ class DB {
   addMessage(channel, msg) {
     
     if (this.messages[channel] === undefined) {
-      console.log('DEBUG: ', this.messages);
+      console.log('Message was sent to an channel which is not in heap ');
       return;
     }
     
